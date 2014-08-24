@@ -42,24 +42,31 @@
             (when (file-regular-p moviefile) (throw 'movieFound moviefile))))))))
 
 (defun seek-play-movie (time)
-  "play the same file name movie seeked, using some other program (mp4 and mplayer2 only for now)"
+  "play the same file name movie seeked, using some other program. (mplayer2 only for now)"
   ;; TODO: what should I do with other movie players?
     (let* ((filename (buffer-file-name (current-buffer)))
           (moviename (find-movie-file filename)))
-      (if (null moviename) (message "movie not found")
+      (if (null moviename) (message "movie not found.")
         (message moviename)
         (shell-command (format "mplayer2 --sub=%s --ss=%d %s" (shell-quote-argument (expand-file-name filename)) time (shell-quote-argument (expand-file-name moviename)))))))
 
+(defun at-number-p ()
+  "cursor is on number"
+  (save-excursion
+    (beginning-of-line)
+    (looking-at "^[0-9]+$")))
 
 (defun check-movie-at ()
   "play the movie of where the cursor is"
   (interactive)
   (save-excursion
-	(if (re-search-backward "^\\([0-9][0-9]\\):\\([0-9][0-9]\\):\\([0-9][0-9]\\)" nil t) ; TODO:字幕通し番号の上にある時はsearch-forward する方が自然
-		(let ((h (string-to-int (buffer-substring (match-beginning 1) (match-end 1))))
-			  (m (string-to-int (buffer-substring (match-beginning 2) (match-end 2))))
-			  (s (string-to-int (buffer-substring (match-beginning 3) (match-end 3)))))
-		  (seek-play-movie (+ (* (+ (* h 60) m) 60) s))))))
+	(cond 
+     ((at-number-p) (re-search-forward "^\\([0-9][0-9]\\):\\([0-9][0-9]\\):\\([0-9][0-9]\\)" nil t))
+     (t (re-search-backward "^\\([0-9][0-9]\\):\\([0-9][0-9]\\):\\([0-9][0-9]\\)" nil t))))
+    (let ((h (string-to-int (buffer-substring (match-beginning 1) (match-end 1))))
+          (m (string-to-int (buffer-substring (match-beginning 2) (match-end 2))))
+          (s (string-to-int (buffer-substring (match-beginning 3) (match-end 3)))))
+      (seek-play-movie (+ (* (+ (* h 60) m) 60) s))))
 ;;
 ;; faces
 ;;
